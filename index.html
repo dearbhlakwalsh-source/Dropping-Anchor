@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Breathe.">
+<meta name="theme-color" content="#F6F1E9">
+<title>Breathe. You're okay.</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; }
+body { font-family: 'DM Sans', sans-serif; background: #F6F1E9; color: #2C2820; touch-action: manipulation; }
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background: radial-gradient(ellipse at 25% 15%, rgba(210,185,150,0.18) 0%, transparent 55%),
+              radial-gradient(ellipse at 75% 85%, rgba(185,160,125,0.12) 0%, transparent 50%);
+  pointer-events: none; z-index: 0;
+}
+.screen {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 2.5rem 2rem; opacity: 0; pointer-events: none;
+  transition: opacity 0.7s ease; text-align: center; z-index: 1;
+}
+.screen.active { opacity: 1; pointer-events: all; }
+.screen.scroll { justify-content: flex-start; overflow-y: auto; padding: 3rem 2rem 7rem; -webkit-overflow-scrolling: touch; }
+
+/* ── S0: OPENING ── */
+#s0 { cursor: pointer; }
+.open-word { font-family: 'Cormorant Garamond', serif; font-size: clamp(4.5rem, 20vw, 8rem); font-weight: 300; line-height: 1; color: #2C2820; letter-spacing: -0.01em; opacity: 0; transform: translateY(8px); }
+.open-word.show { opacity: 1; transform: translateY(0); transition: opacity 0.8s ease, transform 0.8s ease; }
+.open-line2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.1rem, 4vw, 1.6rem); font-weight: 300; font-style: italic; color: #8B6F4E; margin-top: 0.4rem; line-height: 1.3; opacity: 0; transition: opacity 0.6s ease 0.8s; }
+.open-line2.show { opacity: 1; }
+.open-sub { font-size: 13px; color: #9A8E7E; margin-top: 1.4rem; font-weight: 300; letter-spacing: 0.04em; max-width: 340px; line-height: 1.6; opacity: 0; transition: opacity 0.6s ease 1.2s; }
+.open-sub.show { opacity: 1; }
+.open-hint { position: absolute; bottom: 2.5rem; font-size: 11px; color: #C4B8A4; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0; transition: opacity 0.5s ease 2s; }
+.open-hint.show { opacity: 1; }
+
+/* ── S1: DROP ANCHOR ── */
+#s1 { background: #F0EAE0; }
+.anchor-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.8rem, 6vw, 2.6rem); font-weight: 300; color: #2C2820; line-height: 1.2; margin-bottom: 0.3rem; opacity: 0; transform: translateY(6px); }
+.anchor-title.show { opacity: 1; transform: translateY(0); transition: opacity 0.6s ease, transform 0.6s ease; }
+.anchor-title em { font-style: italic; color: #8B6F4E; }
+.anchor-intro { font-size: 13px; color: #9A8E7E; margin-bottom: 1.4rem; line-height: 1.6; max-width: 440px; opacity: 0; transition: opacity 0.5s ease 0.3s; }
+.anchor-intro.show { opacity: 1; }
+
+/* The three simultaneous panels */
+.anchor-panels { width: 100%; max-width: 460px; opacity: 0; transition: opacity 0.5s ease 0.5s; }
+.anchor-panels.show { opacity: 1; }
+
+.ace-panel {
+  border-radius: 14px; padding: 14px 16px; margin-bottom: 8px;
+  text-align: left; border: 1px solid rgba(180,158,128,0.22);
+  background: rgba(255,255,255,0.5);
+}
+.ace-panel-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.ace-panel-letter { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 300; color: #D4C4A8; line-height: 1; width: 22px; flex-shrink: 0; }
+.ace-panel-name { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-style: italic; color: #8B6F4E; font-weight: 300; }
+.ace-panel-body { font-size: 13px; color: #7A6E5E; line-height: 1.6; padding-left: 32px; }
+.ace-panel-body em { font-style: italic; color: #8B6F4E; }
+
+/* Cycle counter */
+.cycle-wrap { width: 100%; max-width: 460px; margin-top: 6px; opacity: 0; transition: opacity 0.5s ease 0.7s; }
+.cycle-wrap.show { opacity: 1; }
+.cycle-label { font-size: 11px; color: #9A8E7E; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+.cycle-dots { display: flex; gap: 10px; justify-content: center; margin-bottom: 12px; }
+.cycle-dot { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid #D4C4A8; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #C4B8A4; font-family: 'DM Sans', sans-serif; transition: all 0.25s; }
+.cycle-dot.done { background: #8B6F4E; border-color: #8B6F4E; color: white; }
+.cycle-dot:hover:not(.done) { border-color: #8B6F4E; color: #8B6F4E; }
+.cycle-note { font-size: 12px; color: #9A8E7E; line-height: 1.55; text-align: center; font-style: italic; }
+
+.anchor-next { position: absolute; bottom: 2.5rem; padding: 11px 34px; border-radius: 40px; border: 1.5px solid #D4C4A8; background: transparent; color: #9A8E7E; font-size: 13px; font-family: 'DM Sans', sans-serif; letter-spacing: 0.05em; cursor: pointer; transition: all 0.3s ease; opacity: 0; }
+.anchor-next.visible { opacity: 1; border-color: #8B6F4E; color: #8B6F4E; }
+.anchor-next:hover { background: rgba(139,111,78,0.07); }
+
+/* ── ACE STEPS SHARED ── */
+.step-letter { font-family: 'Cormorant Garamond', serif; font-size: clamp(4rem, 16vw, 6.5rem); font-weight: 300; color: #E0D5C5; line-height: 1; opacity: 0; transition: opacity 0.5s ease; }
+.step-letter.show { opacity: 1; }
+.step-name { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.3rem, 4.5vw, 1.8rem); font-weight: 300; font-style: italic; color: #8B6F4E; margin-bottom: 1.4rem; opacity: 0; transition: opacity 0.5s ease 0.2s; }
+.step-name.show { opacity: 1; }
+.step-body { width: 100%; max-width: 480px; opacity: 0; transition: opacity 0.5s ease 0.4s; }
+.step-body.show { opacity: 1; }
+.step-next { position: absolute; bottom: 2.5rem; padding: 11px 34px; border-radius: 40px; border: 1.5px solid #D4C4A8; background: transparent; color: #9A8E7E; font-size: 13px; font-family: 'DM Sans', sans-serif; letter-spacing: 0.05em; cursor: pointer; transition: all 0.3s ease; opacity: 0; }
+.step-next.visible { opacity: 1; border-color: #8B6F4E; color: #8B6F4E; }
+.step-next:hover { background: rgba(139,111,78,0.07); }
+
+/* ── S2: ACKNOWLEDGE ── */
+.ack-intro { font-size: 13px; color: #9A8E7E; margin-bottom: 12px; text-align: left; line-height: 1.6; }
+.ack-prompt { background: rgba(255,255,255,0.55); border: 1px solid rgba(180,158,128,0.22); border-radius: 13px; padding: 13px 16px; margin-bottom: 7px; cursor: pointer; transition: all 0.2s ease; text-align: left; display: flex; align-items: flex-start; gap: 12px; }
+.ack-prompt:hover { background: rgba(255,255,255,0.8); border-color: rgba(139,111,78,0.3); }
+.ack-prompt.ticked { background: rgba(210,190,160,0.18); border-color: rgba(139,111,78,0.4); }
+.ack-check { width: 17px; height: 17px; border-radius: 50%; border: 1.5px solid #D4C4A8; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: transparent; transition: all 0.2s; }
+.ack-prompt.ticked .ack-check { background: #8B6F4E; border-color: #8B6F4E; color: white; }
+.ack-label { font-size: 14px; color: #3C3028; line-height: 1.45; flex: 1; }
+.ack-sub { font-size: 12px; color: #9A8E7E; display: block; margin-top: 2px; line-height: 1.4; }
+
+/* ── S3: CONNECT ── */
+#s3 { background: #F2ECE2; }
+.breath-outer { position: relative; width: min(200px, 48vw); height: min(200px, 48vw); margin: 0.5rem auto 1.2rem; }
+.breath-svg { width: 100%; height: 100%; }
+.br-ring { fill: none; stroke: rgba(180,158,128,0.18); stroke-width: 1.5; }
+.br-prog { fill: none; stroke: #8B6F4E; stroke-width: 2; stroke-linecap: round; stroke-dasharray: 0 1000; transform: rotate(-90deg); transform-origin: 50% 50%; }
+.br-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+.br-word { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.3rem, 4.5vw, 1.8rem); font-weight: 300; font-style: italic; color: #2C2820; }
+.br-count { font-size: 11px; color: #9A8E7E; letter-spacing: 0.1em; text-transform: uppercase; }
+.br-pattern { font-size: 11px; color: #C4B8A4; text-align: center; letter-spacing: 0.06em; margin-bottom: 1rem; }
+.ground-steps { text-align: left; }
+.gs { display: flex; gap: 14px; padding: 10px 0; border-bottom: 1px solid rgba(180,158,128,0.15); }
+.gs:last-child { border: none; }
+.gs-icon { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; margin-top: 1px; background: rgba(139,111,78,0.1); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 0.9rem; color: #8B6F4E; }
+.gs-body { flex: 1; }
+.gs-t { font-size: 14px; font-weight: 500; color: #2C2820; margin-bottom: 2px; }
+.gs-d { font-size: 13px; color: #7A6E5E; line-height: 1.55; }
+.gs-d em { font-style: italic; color: #8B6F4E; }
+
+/* ── S4: ENGAGE ── */
+.engage-q { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.05rem, 3.5vw, 1.3rem); font-weight: 300; font-style: italic; color: #7A6E5E; max-width: 420px; line-height: 1.65; margin-bottom: 1.4rem; opacity: 0; transition: opacity 0.5s ease 0.3s; }
+.engage-q.show { opacity: 1; }
+.engage-opt { background: rgba(255,255,255,0.5); border: 1px solid rgba(180,158,128,0.22); border-radius: 13px; padding: 14px 16px; margin-bottom: 7px; cursor: pointer; transition: all 0.2s; text-align: left; display: flex; align-items: flex-start; gap: 12px; }
+.engage-opt:hover { background: rgba(255,255,255,0.8); border-color: rgba(139,111,78,0.3); }
+.engage-opt.chosen { background: rgba(139,111,78,0.08); border-color: #8B6F4E; }
+.engage-dot { width: 7px; height: 7px; border-radius: 50%; background: #D4C4A8; flex-shrink: 0; margin-top: 5px; transition: background 0.2s; }
+.engage-opt.chosen .engage-dot { background: #8B6F4E; }
+.engage-opt-t { font-size: 14px; color: #3C3028; line-height: 1.4; flex: 1; }
+.engage-opt-s { font-size: 12px; color: #9A8E7E; display: block; margin-top: 2px; }
+.engage-custom { width: 100%; padding: 13px 16px; margin-top: 4px; font-size: 14px; font-family: 'DM Sans', sans-serif; background: rgba(255,255,255,0.5); border: 1px solid rgba(180,158,128,0.22); border-radius: 13px; color: #2C2820; resize: none; height: 54px; }
+.engage-custom:focus { outline: none; border-color: rgba(139,111,78,0.4); background: rgba(255,255,255,0.8); }
+.engage-custom::placeholder { color: #C4B8A4; }
+.engage-go { width: 100%; margin-top: 10px; padding: 14px; border-radius: 13px; border: 1.5px solid #8B6F4E; background: transparent; color: #8B6F4E; font-size: 14px; font-family: 'DM Sans', sans-serif; font-weight: 500; cursor: pointer; transition: all 0.2s; opacity: 0; }
+.engage-go.visible { opacity: 1; }
+.engage-go:hover { background: rgba(139,111,78,0.07); }
+
+/* ── S5: DONE ── */
+#s5 { cursor: pointer; background: #EEE8DC; }
+.done-big { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.8rem, 10vw, 5rem); font-weight: 300; color: #2C2820; line-height: 1; opacity: 0; transform: translateY(6px); }
+.done-big.show { opacity: 1; transform: translateY(0); transition: opacity 0.7s ease, transform 0.7s ease; }
+.done-russ { font-size: 13px; color: #9A8E7E; margin-top: 1.2rem; max-width: 360px; line-height: 1.7; font-weight: 300; opacity: 0; transition: opacity 0.6s ease 0.6s; }
+.done-russ.show { opacity: 1; }
+.done-russ em { font-style: italic; color: #8B6F4E; }
+.done-tap { position: absolute; bottom: 2.5rem; font-size: 11px; color: #C4B8A4; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; background: rgba(246,241,233,0.96); backdrop-filter: blur(10px); border-top: 1px solid rgba(180,158,128,0.18); z-index: 300; padding-bottom: env(safe-area-inset-bottom); }
+.bottom-nav.hidden { display: none; }
+.bnav-btn { flex: 1; padding: 12px 6px 10px; font-size: 10px; font-family: 'DM Sans', sans-serif; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: #C4B8A4; cursor: pointer; border: none; background: transparent; transition: color 0.2s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.bnav-btn.active { color: #8B6F4E; }
+.bnav-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ── PROGRESS DOTS ── */
+.pdots { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 200; pointer-events: none; transition: opacity 0.3s; }
+.pdots.hidden { opacity: 0; }
+.pdot { width: 5px; height: 5px; border-radius: 50%; background: rgba(180,158,128,0.28); transition: all 0.3s; }
+.pdot.active { background: #8B6F4E; transform: scale(1.3); }
+
+/* ── REFERENCE PAGES ── */
+.ref-page-header { text-align: center; width: 100%; max-width: 520px; margin-bottom: 1.8rem; }
+.ref-page-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.8rem, 6vw, 2.4rem); font-weight: 300; color: #2C2820; margin-bottom: 4px; }
+.ref-page-title em { font-style: italic; color: #8B6F4E; }
+.ref-page-sub { font-size: 13px; color: #9A8E7E; letter-spacing: 0.05em; }
+.ref-wrap { width: 100%; max-width: 520px; }
+.ref-block { margin-bottom: 1.6rem; }
+.ref-big-letter { font-family: 'Cormorant Garamond', serif; font-size: 3rem; font-weight: 300; color: #E0D5C5; line-height: 1; margin-bottom: 2px; }
+.ref-step-name { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-style: italic; font-weight: 300; color: #8B6F4E; margin-bottom: 10px; }
+.ref-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(180,158,128,0.14); }
+.ref-item:last-child { border: none; }
+.ref-dot { width: 5px; height: 5px; border-radius: 50%; background: #D4C4A8; flex-shrink: 0; margin-top: 7px; }
+.ref-text { font-size: 14px; color: #4A3E30; line-height: 1.6; flex: 1; }
+.ref-text em { font-style: italic; color: #8B6F4E; }
+.ref-divider { border: none; border-top: 1px solid rgba(180,158,128,0.18); margin: 1.4rem 0; }
+
+.expand-card { background: rgba(255,255,255,0.5); border: 1px solid rgba(180,158,128,0.2); border-radius: 13px; margin-bottom: 8px; overflow: hidden; }
+.expand-header { display: flex; align-items: center; gap: 10px; padding: 13px 16px; cursor: pointer; transition: background 0.2s; }
+.expand-header:hover, .expand-card.open .expand-header { background: rgba(255,255,255,0.7); }
+.expand-hdot { width: 7px; height: 7px; border-radius: 50%; background: #D4C4A8; flex-shrink: 0; transition: background 0.2s; }
+.expand-card.open .expand-hdot { background: #8B6F4E; }
+.expand-htitle { font-size: 14px; font-weight: 500; color: #2C2820; flex: 1; text-align: left; }
+.expand-arrow { font-size: 13px; color: #C4B8A4; transition: transform 0.25s; }
+.expand-card.open .expand-arrow { transform: rotate(180deg); }
+.expand-body { display: none; padding: 0 16px 14px; border-top: 1px solid rgba(180,158,128,0.14); }
+.expand-card.open .expand-body { display: block; }
+.expand-body p { font-size: 13px; color: #7A6E5E; line-height: 1.65; margin-top: 12px; }
+.expand-body strong { font-weight: 500; color: #4A3E30; }
+.expand-body em { font-style: italic; color: #8B6F4E; }
+
+.phrase-lift { background: rgba(255,255,255,0.5); border: 1px solid rgba(180,158,128,0.2); border-radius: 13px; padding: 15px 18px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+.phrase-lift:hover { background: rgba(255,255,255,0.8); border-color: rgba(139,111,78,0.3); }
+.phrase-lift-label { font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: #8B6F4E; margin-bottom: 5px; }
+.phrase-lift-text { font-family: 'Cormorant Garamond', serif; font-size: clamp(0.95rem, 2.5vw, 1.1rem); font-style: italic; font-weight: 300; color: #2C2820; line-height: 1.55; }
+.phrase-copied { position: absolute; top: 11px; right: 14px; font-size: 11px; color: #8B6F4E; opacity: 0; transition: opacity 0.3s; }
+.phrase-copied.show { opacity: 1; }
+
+.note-card { background: rgba(255,255,255,0.45); border: 1px solid rgba(180,158,128,0.18); border-radius: 13px; padding: 17px 19px; }
+.note-label { font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: #9A8E7E; margin-bottom: 8px; }
+.note-text { font-family: 'Cormorant Garamond', serif; font-size: clamp(0.95rem, 2.5vw, 1.05rem); font-style: italic; font-weight: 300; color: #4A3E30; line-height: 1.65; }
+
+.distinction-card { background: rgba(139,111,78,0.06); border: 1px solid rgba(139,111,78,0.2); border-radius: 13px; padding: 16px 18px; margin-bottom: 14px; }
+.distinction-card p { font-size: 13px; color: #7A6E5E; line-height: 1.65; }
+.distinction-card strong { font-weight: 500; color: #4A3E30; }
+.distinction-card em { font-style: italic; color: #8B6F4E; }
+
+.flow-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 1rem 0; }
+.flow-pill { background: rgba(139,111,78,0.1); border: 1px solid rgba(139,111,78,0.25); border-radius: 20px; padding: 6px 14px; font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-style: italic; color: #8B6F4E; white-space: nowrap; }
+.flow-arrow { font-size: 16px; color: #D4C4A8; }
+</style>
+</head>
+<body>
+
+<div class="pdots" id="pdots">
+  <div class="pdot active"></div>
+  <div class="pdot"></div>
+  <div class="pdot"></div>
+  <div class="pdot"></div>
+  <div class="pdot"></div>
+</div>
+
+<div class="bottom-nav hidden" id="bnav">
+  <button class="bnav-btn active" id="bn-guide" onclick="switchTab(6)">
+    <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Guide
+  </button>
+  <button class="bnav-btn" id="bn-sit" onclick="switchTab(7)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+    Situations
+  </button>
+  <button class="bnav-btn" id="bn-phrases" onclick="switchTab(8)">
+    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    Phrases
+  </button>
+</div>
+
+<!-- ══════════════════════ S0: OPENING ══════════════════════ -->
+<div class="screen active" id="s0" onclick="goTo(1)">
+  <div class="open-word" id="ow">Breathe.</div>
+  <div class="open-line2" id="ol">You are okay right now.</div>
+  <div class="open-sub" id="os">Your thoughts are not facts. Your body is safe. This will pass.</div>
+  <div class="open-hint" id="oh">Tap to begin</div>
+</div>
+
+<!-- ══════════════════════ S1: DROP ANCHOR ══════════════════════ -->
+<div class="screen" id="s1">
+  <div class="anchor-title" id="at">Drop <em>anchor.</em></div>
+  <div class="anchor-intro" id="ai">All three happen at the same time — you acknowledge, connect, and engage simultaneously. Work through it slowly. Tap a cycle dot each time you complete one round.</div>
+
+  <div class="anchor-panels" id="apanels">
+    <div class="ace-panel">
+      <div class="ace-panel-header">
+        <div class="ace-panel-letter">A</div>
+        <div class="ace-panel-name">Acknowledge</div>
+      </div>
+      <div class="ace-panel-body">
+        Notice whatever is showing up — thoughts, feelings, sensations, urges. Say silently: <em>"I'm noticing anxiety"</em> or <em>"I'm noticing my mind racing"</em> or <em>"I'm noticing dread."</em> Keep noticing throughout.
+      </div>
+    </div>
+    <div class="ace-panel">
+      <div class="ace-panel-header">
+        <div class="ace-panel-letter">C</div>
+        <div class="ace-panel-name">Connect with your body</div>
+      </div>
+      <div class="ace-panel-body">
+        While still acknowledging — press your feet into the floor. Straighten your back. Press fingertips together. Stretch your neck slowly. Breathe slowly. <em>Stay aware of the thoughts and feelings while doing this.</em>
+      </div>
+    </div>
+    <div class="ace-panel">
+      <div class="ace-panel-header">
+        <div class="ace-panel-letter">E</div>
+        <div class="ace-panel-name">Engage with the world</div>
+      </div>
+      <div class="ace-panel-body">
+        While acknowledging and connecting — look around. Notice 5 things you can see. Notice 3 sounds. Notice what you can smell or taste. <em>Give your attention to where you actually are.</em>
+      </div>
+    </div>
+  </div>
+
+  <div class="cycle-wrap" id="cwrap">
+    <div class="cycle-label">Cycles completed — aim for 3 or 4</div>
+    <div class="cycle-dots">
+      <div class="cycle-dot" id="cd0" onclick="cycleDone(0)">1</div>
+      <div class="cycle-dot" id="cd1" onclick="cycleDone(1)">2</div>
+      <div class="cycle-dot" id="cd2" onclick="cycleDone(2)">3</div>
+      <div class="cycle-dot" id="cd3" onclick="cycleDone(3)">4</div>
+    </div>
+    <div class="cycle-note" id="cycle-note">Don't skip the A — keep acknowledging throughout, even when it's uncomfortable.</div>
+  </div>
+
+  <button class="anchor-next" id="anext" onclick="goTo(2)">Anchored — continue to ACE →</button>
+</div>
+
+<!-- ══════════════════════ S2: ACKNOWLEDGE ══════════════════════ -->
+<div class="screen" id="s2">
+  <div class="step-letter" id="sl2">A</div>
+  <div class="step-name" id="sn2">Acknowledge</div>
+  <div class="step-body" id="sb2">
+    <p class="ack-intro">Now in ACE — notice and name what's present. Tap everything that's here right now. Use the phrase "I'm noticing…" in your mind.</p>
+    <div class="ack-prompt" onclick="tick(this)"><div class="ack-check">✓</div><div class="ack-label">Physical symptoms — chest tight, heart racing, hard to breathe<span class="ack-sub">"I'm noticing physical anxiety in my body."</span></div></div>
+    <div class="ack-prompt" onclick="tick(this)"><div class="ack-check">✓</div><div class="ack-label">A general sense of dread I can't name<span class="ack-sub">"I'm noticing dread. I don't know why. That's okay."</span></div></div>
+    <div class="ack-prompt" onclick="tick(this)"><div class="ack-check">✓</div><div class="ack-label">Anticipatory dread before a social situation<span class="ack-sub">"I'm noticing my mind predicting this will go badly."</span></div></div>
+    <div class="ack-prompt" onclick="tick(this)"><div class="ack-check">✓</div><div class="ack-label">Night-time spiral<span class="ack-sub">"I'm noticing my mind racing in the dark."</span></div></div>
+    <div class="ack-prompt" onclick="tick(this)"><div class="ack-check">✓</div><div class="ack-label">Racing thoughts, worrying, ruminating<span class="ack-sub">"I'm noticing my mind going over this again and again."</span></div></div>
+  </div>
+  <button class="step-next" id="sn-btn2" onclick="goTo(3)">I've noticed what's here →</button>
+</div>
+
+<!-- ══════════════════════ S3: CONNECT ══════════════════════ -->
+<div class="screen" id="s3">
+  <div class="step-letter" id="sl3">C</div>
+  <div class="step-name" id="sn3">Connect</div>
+  <div class="step-body" id="sb3">
+    <div class="breath-outer">
+      <svg class="breath-svg" viewBox="0 0 160 160">
+        <circle class="br-ring" cx="80" cy="80" r="68"/>
+        <circle class="br-prog" id="brprog" cx="80" cy="80" r="68"/>
+      </svg>
+      <div class="br-inner">
+        <div class="br-word" id="brword">In</div>
+        <div class="br-count" id="brcount">4</div>
+      </div>
+    </div>
+    <div class="br-pattern">4 · 4 · 6 · 2 — box breath</div>
+    <div class="ground-steps">
+      <div class="gs"><div class="gs-icon">↓</div><div class="gs-body"><div class="gs-t">Press feet into the floor</div><div class="gs-d">Feel the ground pushing back. <em>You have weight. You are here.</em></div></div></div>
+      <div class="gs"><div class="gs-icon">↑</div><div class="gs-body"><div class="gs-t">Straighten your back</div><div class="gs-d">Sit upright and forward. Feel your body take up space. <em>You are solid. You are present.</em></div></div></div>
+      <div class="gs"><div class="gs-icon">♡</div><div class="gs-body"><div class="gs-t">Hand on chest — feel it rise and fall</div><div class="gs-d">Your body is working. The physical sensations are real — and they are not dangerous. <em>Discomfort is not danger.</em></div></div></div>
+    </div>
+  </div>
+  <button class="step-next visible" id="sn-btn3" style="opacity:0; transition:opacity 0.5s ease 1s;" onclick="goTo(4)">I'm connected →</button>
+</div>
+
+<!-- ══════════════════════ S4: ENGAGE ══════════════════════ -->
+<div class="screen" id="s4">
+  <div class="step-letter" id="sl4">E</div>
+  <div class="step-name" id="sn4">Engage</div>
+  <div class="engage-q" id="eq">What is one thing I can move <em>towards</em> right now — guided by what matters to me, not driven away by the anxiety?</div>
+  <div class="step-body" id="sb4">
+    <div class="engage-opt" onclick="chooseEngage(this)"><div class="engage-dot"></div><div class="engage-opt-t">Call or message someone<span class="engage-opt-s">Connection interrupts the isolation anxiety feeds on</span></div></div>
+    <div class="engage-opt" onclick="chooseEngage(this)"><div class="engage-dot"></div><div class="engage-opt-t">Put something on to listen to<span class="engage-opt-s">Podcast, audiobook, music — gentle input so your brain stops generating its own</span></div></div>
+    <div class="engage-opt" onclick="chooseEngage(this)"><div class="engage-dot"></div><div class="engage-opt-t">Move — walk, stretch, shake it out<span class="engage-opt-s">Gets you out of your head and back into your body</span></div></div>
+    <div class="engage-opt" onclick="chooseEngage(this)"><div class="engage-dot"></div><div class="engage-opt-t">Do one small concrete thing<span class="engage-opt-s">Make a drink, tidy one surface, wash your hands</span></div></div>
+    <div class="engage-opt" onclick="chooseEngage(this)"><div class="engage-dot"></div><div class="engage-opt-t">Write down what the anxiety is saying<span class="engage-opt-s">Out of your head and onto paper — reduces its power</span></div></div>
+    <div class="engage-opt" onclick="chooseEngage(this)"><div class="engage-dot"></div><div class="engage-opt-t">For night-time: get up and do something small<span class="engage-opt-s">Break the lying-there-spiralling loop — change environment</span></div></div>
+    <div class="engage-opt" onclick="chooseEngage(this)"><div class="engage-dot"></div><div class="engage-opt-t">For night-time: put something calm on to listen to<span class="engage-opt-s">Give your brain just enough input to quieten. Resolution can wait until morning.</span></div></div>
+    <textarea class="engage-custom" id="ecustom" placeholder="Or write your own…" oninput="customEngage(this)"></textarea>
+    <button class="engage-go" id="ego" onclick="goTo(5)">I'm going to do this →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════ S5: DONE ══════════════════════ -->
+<div class="screen" id="s5" onclick="goTo(6)">
+  <div class="done-big" id="db">Well done.</div>
+  <div class="done-russ" id="dr">
+    You dropped anchor. You noticed. You came back. You chose.<br><br>
+    <em>That is the whole toolkit — and you just used it.</em><br><br>
+    The anxiety may still be there. That's okay. You responded to it with skill, not struggle.
+  </div>
+  <div class="done-tap">Tap to open your reference tools</div>
+</div>
+
+<!-- ══════════════════════ S6: GUIDE ══════════════════════ -->
+<div class="screen scroll" id="s6">
+  <div class="ref-page-header" id="rph6">
+    <div class="ref-page-title">Your <em>full toolkit</em></div>
+    <div class="ref-page-sub">Dropping Anchor + ACE · Russ Harris</div>
+  </div>
+  <div class="ref-wrap" id="rrw6">
+
+    <div class="flow-row">
+      <div class="flow-pill">Drop Anchor</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-pill">Acknowledge</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-pill">Connect</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-pill">Engage</div>
+    </div>
+
+    <p style="font-size:13px; color:#9A8E7E; line-height:1.6; margin: 1rem 0 1.4rem;">Anchor first to stabilise — then ACE to move forward. You can use Anchor alone when you just need to get grounded. Use both when you have more capacity.</p>
+
+    <hr class="ref-divider">
+
+    <div class="ref-block">
+      <div class="ref-big-letter">⚓</div>
+      <div class="ref-step-name">Dropping Anchor — how it actually works</div>
+
+      <div class="distinction-card">
+        <p><strong>Important:</strong> A, C and E in the anchor all happen <em>at the same time</em>, not in sequence. You acknowledge the thoughts and feelings while connecting with your body while engaging your senses — all simultaneously, cycling through 3–4 times slowly. This is a 2–3 minute exercise when done properly.</p>
+        <p style="margin-top:8px;"><em>Don't skip the A.</em> Russ Harris is explicit about this — if you drop the Acknowledge step, the exercise becomes a distraction technique, which is not the point. The anchor works because you stay aware of the difficult experience while also being grounded. Both at once.</p>
+      </div>
+
+      <div class="ref-item"><div class="ref-dot"></div><div class="ref-text"><strong>A — Acknowledge:</strong> silently say "I'm noticing…" — "I'm noticing anxiety", "I'm noticing my mind racing", "I'm noticing dread." Keep noticing throughout the whole exercise.</div></div>
+      <div class="ref-item"><div class="ref-dot"></div><div class="ref-text"><strong>C — Connect with your body:</strong> while acknowledging — press feet into floor, straighten your back, press fingertips together, stretch slowly, breathe slowly. Stay aware of thoughts and feelings while doing this.</div></div>
+      <div class="ref-item"><div class="ref-dot"></div><div class="ref-text"><strong>E — Engage with the world around you:</strong> while acknowledging and connecting — look around, name 5 things you see, notice 3 sounds, notice what you can smell or taste. Give your attention to where you actually are.</div></div>
+      <div class="ref-item"><div class="ref-dot"></div><div class="ref-text">The goal is not to make the storm disappear. The goal is to be steady in it — anchored to the present moment while the difficult experience is still there.</div></div>
+    </div>
+
+    <hr class="ref-divider">
+
+    <div class="distinction-card">
+      <p><strong>The E in Dropping Anchor vs the E in ACE — they're different.</strong></p>
+      <p style="margin-top:8px;">In the anchor, E means <em>engage with what's around you right now</em> — your senses, the room, the present moment. It's about grounding in the here and now.</p>
+      <p style="margin-top:8px;">In ACE, E means <em>engage in valued action</em> — choose something to move towards that matters to you. It's about direction and meaning.</p>
+      <p style="margin-top:8px;">Anchor first to stabilise. ACE to move forward.</p>
+    </div>
+
+    <hr class="ref-divider">
+
+    <div class="ref-block">
+      <div class="ref-big-letter">A</div>
+      <div class="ref-step-name">Acknowledge — in ACE</div>
+      <div class="ref-item"><div class="ref-dot"></div><div class="ref-text">Notice thoughts, feelings, and physical sensations — without judging, fixing, or pushing them away. Take the stance of a curious observer.</div></div>
+      <div class="ref-item"><div class="ref-dot"></div><div class="ref-text"><em>"I'm noticing anxiety. I'm noticing my heart is racing. I'm noticing my mind telling me something bad will happen."</em></div></div>
+      <div class="ref-item"><div class="ref-dot"></div><div class="ref-text">Why it works: naming an experience creates a small space between you and it. That space is where choice lives.</div></div>
+    </div>
+
+    <hr class="ref-divider">
+
+    <div class="ref-block">
+      <div class="ref-big-letter">C</div>
+      <div class="ref-step-name">Connect — in ACE</div>
+      <div class="ref-item"><div class="ref-dot"></div><div class="ref-text">Come back into your body and the present moment. Breathe slowly. Feel your feet. Look around.</div></div>
+      <div class="ref-item"><div class="ref-dot"></div><div class="ref-text"><em>"I am in this room. I am physically safe right now. The anxiety is in my mind, not in reality."</em></div></div>
+      <div class="ref-item"><div class="ref-dot"></div><div class="ref-text">Why it works: anxiety lives in a projected future or a replayed past. The present moment is almost always actually okay.</div></div>
+    </div>
+
+    <hr class="ref-divider">
+
+    <div class="ref-block">
+      <div class="ref-big-letter">E</div>
+      <div class="ref-step-name">Engage — in ACE</div>
+      <div class="ref-item"><div class="ref-dot"></div><div class="ref-text">Choose to re-engage with something meaningful. Not to avoid anxiety — to move towards what matters.</div></div>
+      <div class="ref-item"><div class="ref-dot"></div><div class="ref-text"><em>"What would I do right now if I were acting from my values rather than driven by the anxiety?"</em></div></div>
+      <div class="ref-item"><div class="ref-dot"></div><div class="ref-text">This is ACT's committed action: behaviour guided by what matters, not by avoidance.</div></div>
+    </div>
+
+    <hr class="ref-divider">
+
+    <div class="note-card">
+      <div class="note-label">Russ Harris</div>
+      <div class="note-text">"The aim isn't to feel better — it's to live better. These tools give you a way to respond to anxiety with skill rather than struggle."</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════ S7: YOUR SITUATIONS ══════════════════════ -->
+<div class="screen scroll" id="s7">
+  <div class="ref-page-header" id="rph7">
+    <div class="ref-page-title"><em>Your</em> situations</div>
+    <div class="ref-page-sub">How the toolkit fits each one</div>
+  </div>
+  <div class="ref-wrap" id="rrw7">
+
+    <div class="expand-card">
+      <div class="expand-header" onclick="toggleExpand(this)"><div class="expand-hdot"></div><div class="expand-htitle">Physical symptoms — chest, breathing, heart rate</div><div class="expand-arrow">›</div></div>
+      <div class="expand-body">
+        <p>Physical anxiety symptoms feel alarming because your body is doing exactly what it's designed to do — preparing you for threat. The problem is it can't distinguish between a real threat and a perceived one.</p>
+        <p><em>The sensations are real. They are not dangerous.</em> A racing heart is not a heart attack. Tight chest is not stopping you breathing. Your body will regulate itself.</p>
+        <p><strong>In the anchor:</strong> pressing feet into the floor and straightening your posture gives your nervous system physical signals of safety through your body — not through thinking. Keep acknowledging the sensations while you do this, rather than fighting them.</p>
+        <p><strong>In ACE's Connect:</strong> hand on chest and slow breathing continues that regulation. <em>"These sensations are real. They are not dangerous."</em></p>
+      </div>
+    </div>
+
+    <div class="expand-card">
+      <div class="expand-header" onclick="toggleExpand(this)"><div class="expand-hdot"></div><div class="expand-htitle">Dread with no name — unnamed anxiety</div><div class="expand-arrow">›</div></div>
+      <div class="expand-body">
+        <p>Unnamed dread often feels worse than named fear because your brain treats the unknown as maximum threat. If it can't identify the danger, it stays on high alert indefinitely.</p>
+        <p><em>You don't need to identify it to work with it.</em> In the anchor's Acknowledge step: "I'm noticing dread. I don't know why. That's okay." You don't need a reason. Just notice it's there.</p>
+        <p><strong>Looking around the room</strong> in the anchor's Engage step gives your brain actual evidence that the environment is safe — even when the feeling says otherwise.</p>
+      </div>
+    </div>
+
+    <div class="expand-card">
+      <div class="expand-header" onclick="toggleExpand(this)"><div class="expand-hdot"></div><div class="expand-htitle">Before a social situation — anticipatory dread</div><div class="expand-arrow">›</div></div>
+      <div class="expand-body">
+        <p>Anticipatory anxiety is your brain running threat-simulations before the event — imagining everything that could go wrong. It feels like useful preparation. It isn't. It's your mind rehearsing worst-case scenarios that almost never happen.</p>
+        <p><em>The version of the event your mind is showing you is not what will happen.</em> You have been in social situations before and survived every single one.</p>
+        <p><strong>Anchor phrase:</strong> <em>"I'm noticing my mind predicting this will go badly. I'm noticing anticipatory dread."</em> — name it, then connect with your body and engage your senses.</p>
+        <p><strong>In ACE's Engage:</strong> choose something that moves you towards the situation rather than away from it. Avoidance makes anticipatory anxiety larger every time.</p>
+      </div>
+    </div>
+
+    <div class="expand-card">
+      <div class="expand-header" onclick="toggleExpand(this)"><div class="expand-hdot"></div><div class="expand-htitle">Night-time — when the thoughts get loudest</div><div class="expand-arrow">›</div></div>
+      <div class="expand-body">
+        <p>At night your brain has no external input to compete with anxious thoughts. They fill the space and feel more urgent and more true at midnight than they will in the morning.</p>
+        <p><em>You cannot think your way out of this at night.</em> The analytical brain gets worse after a certain hour, not better. Resolution can wait until morning.</p>
+        <p><strong>The anchor is especially useful at night</strong> — the E step of looking around, noticing sounds, noticing what you can smell, gives your brain real external input to latch onto instead of its own spiralling content.</p>
+        <p><strong>What helps you in ACE's Engage:</strong> getting up and doing something small breaks the lying-there loop. Putting something on to listen to gives your brain gentle input so it stops generating its own. <em>"I don't have to solve this tonight."</em></p>
+      </div>
+    </div>
+
+    <div class="expand-card">
+      <div class="expand-header" onclick="toggleExpand(this)"><div class="expand-hdot"></div><div class="expand-htitle">When it arrives with no obvious trigger</div><div class="expand-arrow">›</div></div>
+      <div class="expand-body">
+        <p>Anxiety that arrives without a clear cause can be the most disorienting — because your mind immediately starts searching for what's wrong, which often amplifies the anxiety further.</p>
+        <p><em>You don't need to find the trigger to use the toolkit.</em> Anchor first — get grounded in your body and the room you're in. The anchor works regardless of whether you understand why the anxiety is there.</p>
+        <p><strong>Useful phrase:</strong> <em>"Something has triggered my nervous system. I don't know what. I don't need to know what. I can respond skillfully without knowing why."</em></p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════ S8: PHRASES ══════════════════════ -->
+<div class="screen scroll" id="s8">
+  <div class="ref-page-header" id="rph8">
+    <div class="ref-page-title">Things to <em>say</em></div>
+    <div class="ref-page-sub">Tap any phrase to copy it · Say it out loud</div>
+  </div>
+  <div class="ref-wrap" id="rrw8">
+
+    <p style="font-size:13px; color:#9A8E7E; line-height:1.6; margin-bottom:14px;">Saying these out loud works differently to reading them. Your own voice saying these words carries more weight than the anxious one in your head.</p>
+
+    <div class="phrase-lift" onclick="copyP(this,0)"><div class="phrase-lift-label">Dropping Anchor — A step</div><div class="phrase-lift-text">"I'm noticing anxiety. I'm noticing my mind racing. I'm noticing dread. I can feel this and stay grounded at the same time."</div><span class="phrase-copied" id="pc0">Copied ✓</span></div>
+    <div class="phrase-lift" onclick="copyP(this,1)"><div class="phrase-lift-label">Dropping Anchor — C step</div><div class="phrase-lift-text">"I'm pressing my feet into the floor. I can feel the ground. I'm here. I'm steady. The storm is here and I am not swept away."</div><span class="phrase-copied" id="pc1">Copied ✓</span></div>
+    <div class="phrase-lift" onclick="copyP(this,2)"><div class="phrase-lift-label">Physical symptoms</div><div class="phrase-lift-text">"These sensations are real. They are not dangerous. My body is doing what bodies do with anxiety. I can notice this without fighting it."</div><span class="phrase-copied" id="pc2">Copied ✓</span></div>
+    <div class="phrase-lift" onclick="copyP(this,3)"><div class="phrase-lift-label">Unnamed dread</div><div class="phrase-lift-text">"I'm noticing dread. I don't know why it's here. I don't need to know why. I just need to acknowledge it and stay grounded."</div><span class="phrase-copied" id="pc3">Copied ✓</span></div>
+    <div class="phrase-lift" onclick="copyP(this,4)"><div class="phrase-lift-label">Anticipatory dread</div><div class="phrase-lift-text">"I'm noticing my mind predicting this will go badly. Predictions are not facts. I have survived every social situation I've been in before."</div><span class="phrase-copied" id="pc4">Copied ✓</span></div>
+    <div class="phrase-lift" onclick="copyP(this,5)"><div class="phrase-lift-label">At night</div><div class="phrase-lift-text">"I don't have to solve this tonight. Everything feels more urgent at midnight than it will in the morning. I am allowed to rest."</div><span class="phrase-copied" id="pc5">Copied ✓</span></div>
+    <div class="phrase-lift" onclick="copyP(this,6)"><div class="phrase-lift-label">No known trigger</div><div class="phrase-lift-text">"Something has triggered my nervous system. I don't know what. I don't need to know what. I can respond skillfully without knowing why."</div><span class="phrase-copied" id="pc6">Copied ✓</span></div>
+    <div class="phrase-lift" onclick="copyP(this,7)"><div class="phrase-lift-label">Defusion</div><div class="phrase-lift-text">"I'm having the thought that something bad will happen. That is a thought. Not a fact. My mind is not always right about the level of threat."</div><span class="phrase-copied" id="pc7">Copied ✓</span></div>
+    <div class="phrase-lift" onclick="copyP(this,8)"><div class="phrase-lift-label">After the toolkit</div><div class="phrase-lift-text">"I dropped anchor. I noticed. I came back. I chose. The anxiety may still be here — and I responded to it with skill."</div><span class="phrase-copied" id="pc8">Copied ✓</span></div>
+
+    <hr class="ref-divider">
+    <div class="note-card">
+      <div class="note-label">For your therapist</div>
+      <div class="note-text">"I've been practising Dropping Anchor and ACE together. Can we work on the Engage step — specifically what to choose when it's anticipatory social anxiety versus unnamed dread versus night-time spiralling?"</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let ackCount = 0, cycleCount = 0, breathRunning = false, breathInterval = null;
+
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('ow').classList.add('show');
+    document.getElementById('ol').classList.add('show');
+    document.getElementById('os').classList.add('show');
+    document.getElementById('oh').classList.add('show');
+  }, 150);
+});
+
+function goTo(n) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s' + n).classList.add('active');
+  const early = n < 6;
+  document.getElementById('pdots').classList.toggle('hidden', !early);
+  if (early) document.querySelectorAll('.pdot').forEach((d,i) => d.classList.toggle('active', i === n));
+  document.getElementById('bnav').classList.toggle('hidden', early);
+  if (!early) updateNav(n);
+  const boots = {
+    1: bootS1, 2: bootS2, 3: bootS3, 4: bootS4, 5: bootS5,
+    6: () => bootRef('rph6','rrw6'),
+    7: () => bootRef('rph7','rrw7'),
+    8: () => bootRef('rph8','rrw8')
+  };
+  if (boots[n]) boots[n]();
+}
+function switchTab(n) { goTo(n); }
+function updateNav(n) {
+  [['bn-guide',6],['bn-sit',7],['bn-phrases',8]].forEach(([id,s]) =>
+    document.getElementById(id).classList.toggle('active', n === s));
+}
+
+// S1: ANCHOR
+function bootS1() {
+  cycleCount = 0;
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('cd' + i);
+    if (d) d.classList.remove('done');
+  }
+  document.getElementById('anext').classList.remove('visible');
+  document.getElementById('cycle-note').textContent = "Don't skip the A — keep acknowledging throughout, even when it's uncomfortable.";
+  fadeIn('at', 100); fadeIn('ai', 300); fadePop('apanels', 500); fadePop('cwrap', 700);
+}
+function cycleDone(idx) {
+  const d = document.getElementById('cd' + idx);
+  if (!d || d.classList.contains('done')) return;
+  d.classList.add('done');
+  cycleCount++;
+  if (cycleCount === 1) document.getElementById('cycle-note').textContent = "Good — keep going. All three happening at once. Notice, ground, look around.";
+  if (cycleCount === 2) document.getElementById('cycle-note').textContent = "Keep acknowledging the thoughts and feelings while you connect and engage.";
+  if (cycleCount === 3) { document.getElementById('cycle-note').textContent = "One more — or continue if you need longer. Take your time."; document.getElementById('anext').classList.add('visible'); }
+  if (cycleCount === 4) document.getElementById('cycle-note').textContent = "Well anchored. When you're ready, continue to ACE.";
+}
+
+// S2: ACKNOWLEDGE
+function bootS2() {
+  ackCount = 0;
+  fadeIn('sl2', 100); fadeIn('sn2', 300); fadePop('sb2', 500);
+  document.getElementById('sn-btn2').classList.remove('visible');
+  document.querySelectorAll('.ack-prompt').forEach(p => { p.classList.remove('ticked'); p.querySelector('.ack-check').style.cssText = ''; });
+}
+function tick(el) {
+  el.classList.toggle('ticked');
+  ackCount += el.classList.contains('ticked') ? 1 : -1;
+  document.getElementById('sn-btn2').classList.toggle('visible', ackCount >= 1);
+}
+
+// S3: CONNECT
+function bootS3() {
+  clearInterval(breathInterval); breathRunning = false;
+  fadeIn('sl3', 100); fadeIn('sn3', 300); fadePop('sb3', 500);
+  const nb = document.getElementById('sn-btn3');
+  nb.style.opacity = '0'; void nb.offsetWidth;
+  setTimeout(() => { nb.style.opacity = '1'; nb.classList.add('visible'); }, 1200);
+  setTimeout(startBreath, 600);
+}
+function startBreath() {
+  if (breathRunning) return;
+  breathRunning = true;
+  const circ = document.getElementById('brprog');
+  const circumference = 2 * Math.PI * 68;
+  const word = document.getElementById('brword');
+  const count = document.getElementById('brcount');
+  let phase = 0, phaseTime = 0;
+  const phases = [
+    { name: 'In',   duration: 4, color: '#8B6F4E' },
+    { name: 'Hold', duration: 4, color: '#A08060' },
+    { name: 'Out',  duration: 6, color: '#B8967A' },
+    { name: 'Hold', duration: 2, color: '#C4A882' }
+  ];
+  function tick() {
+    const p = phases[phase];
+    circ.style.strokeDasharray = `${(phaseTime/p.duration)*circumference} ${circumference}`;
+    circ.style.stroke = p.color;
+    word.textContent = p.name;
+    count.textContent = Math.ceil(p.duration - phaseTime);
+    phaseTime += 0.05;
+    if (phaseTime >= p.duration) { phaseTime = 0; phase = (phase+1) % phases.length; }
+  }
+  breathInterval = setInterval(tick, 50);
+}
+
+// S4: ENGAGE
+function bootS4() {
+  fadeIn('sl4', 100); fadeIn('sn4', 300);
+  const eq = document.getElementById('eq');
+  eq.style.opacity = '0'; void eq.offsetWidth;
+  setTimeout(() => { eq.style.opacity = '1'; eq.style.transition = 'opacity 0.5s ease'; eq.classList.add('show'); }, 400);
+  fadePop('sb4', 600);
+  document.querySelectorAll('.engage-opt').forEach(o => o.classList.remove('chosen'));
+  document.getElementById('ecustom').value = '';
+  document.getElementById('ego').classList.remove('visible');
+}
+function chooseEngage(el) {
+  document.querySelectorAll('.engage-opt').forEach(o => o.classList.remove('chosen'));
+  el.classList.add('chosen');
+  document.getElementById('ecustom').value = '';
+  document.getElementById('ego').classList.add('visible');
+}
+function customEngage(ta) {
+  if (ta.value.trim().length > 0) {
+    document.querySelectorAll('.engage-opt').forEach(o => o.classList.remove('chosen'));
+    document.getElementById('ego').classList.add('visible');
+  } else { document.getElementById('ego').classList.remove('visible'); }
+}
+
+// S5: DONE
+function bootS5() {
+  clearInterval(breathInterval); breathRunning = false;
+  const db = document.getElementById('db'); const dr = document.getElementById('dr');
+  db.classList.remove('show'); dr.classList.remove('show');
+  void db.offsetWidth;
+  setTimeout(() => db.classList.add('show'), 100);
+  setTimeout(() => dr.classList.add('show'), 700);
+}
+
+// Reference pages
+function bootRef(hid, wid) {
+  [hid, wid].forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.opacity = '0'; void el.offsetWidth;
+    setTimeout(() => { el.style.opacity = '1'; el.style.transition = 'opacity 0.5s ease'; }, 100 + i * 200);
+  });
+}
+function toggleExpand(header) { header.closest('.expand-card').classList.toggle('open'); }
+
+// Phrases
+const pTimers = {};
+function copyP(card, idx) {
+  const text = card.querySelector('.phrase-lift-text').textContent.replace(/^"|"$/g,'').trim();
+  if (navigator.clipboard) navigator.clipboard.writeText(text).catch(()=>{});
+  const el = document.getElementById('pc' + idx);
+  if (el) { el.classList.add('show'); clearTimeout(pTimers[idx]); pTimers[idx] = setTimeout(() => el.classList.remove('show'), 2000); }
+}
+
+// Helpers
+function fadeIn(id, delay) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.opacity = '0'; void el.offsetWidth;
+  setTimeout(() => { el.style.opacity = '1'; el.style.transition = 'opacity 0.5s ease'; el.classList.add('show'); }, delay);
+}
+function fadePop(id, delay) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('show'); el.style.opacity = '0'; void el.offsetWidth;
+  setTimeout(() => { el.classList.add('show'); el.style.opacity = '1'; el.style.transition = 'opacity 0.5s ease'; }, delay);
+}
+</script>
+</body>
+</html>
